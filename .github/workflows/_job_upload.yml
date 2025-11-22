@@ -21,19 +21,23 @@ jobs:
           - file: ${{ inputs.name }}.sha512sum
     runs-on: ubuntu-latest
     steps:
+      - name: Ensure release exists
+        run: |
+          gh release view "${{ inputs.version }}" >/dev/null 2>&1 || \
+          gh release create "${{ inputs.version }}" --latest --title "${{ inputs.version }}" --notes ""
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download ${{ matrix.file }} artifact
         uses: actions/download-artifact@v6
         with:
           name: ${{ matrix.file }}
 
       - name: Upload ${{ matrix.file }} to release
-        shell: bash
-        run: >-
-          gh
-          --repo "${{ github.server_url }}/${{ github.repository }}"
-          release upload
-          ${{ inputs.version }}
-          ${{ matrix.file }}
+        run: >
+          gh release upload
+          "${{ inputs.version }}"
+          "${{ matrix.file }}"
           --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
